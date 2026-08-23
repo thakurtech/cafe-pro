@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@restaurant-os/config": "workspace:*",
+    "@restaurant-os/db": "workspace:*",
     "@restaurant-os/domain": "workspace:*",
     "@restaurant-os/types": "workspace:*",
     "@restaurant-os/validation": "workspace:*",

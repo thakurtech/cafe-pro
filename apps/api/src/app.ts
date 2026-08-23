@@ -6,6 +6,7 @@ import { requestContext } from './middleware/request-context.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRouter } from './modules/health/routes.js';
 import { ordersRouter } from './modules/orders/routes.js';
+import { menuRouter } from './modules/menu/routes.js';
 
 export function createApp() {
   const app = express();
@@ -21,6 +22,7 @@ export function createApp() {
 
   app.use('/health', healthRouter);
   app.use('/api/v1/orders', ordersRouter);
+  app.use('/api/v1/menu', menuRouter);
 
   app.use(errorHandler);
   return app;
