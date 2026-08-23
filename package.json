@@ -1,0 +1,29 @@
+{
+  "name": "restaurant-os",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:e2e": "pnpm --filter @restaurant-os/e2e test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "turbo clean && rimraf node_modules .turbo",
+    "db:types": "supabase gen types typescript --local > packages/db/src/database.types.ts",
+    "db:reset": "supabase db reset",
+    "db:migration": "supabase migration new"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2"
+  }
+}

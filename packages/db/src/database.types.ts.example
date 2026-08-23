@@ -1,0 +1,4 @@
+// Generated file placeholder.
+// Run: pnpm db:types
+// Do not manually edit the generated database.types.ts file.
+export type Database = never;

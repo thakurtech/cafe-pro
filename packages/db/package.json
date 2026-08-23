@@ -1,0 +1,21 @@
+{
+  "name": "@restaurant-os/db",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./next": "./src/next.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2",
+    "@supabase/ssr": "^0.10.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

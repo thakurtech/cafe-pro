@@ -1,0 +1,21 @@
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+.supabase/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Local generated DB types; regenerate from Supabase CLI when needed
+packages/db/src/database.types.ts

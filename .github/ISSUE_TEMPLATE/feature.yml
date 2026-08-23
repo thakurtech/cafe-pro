@@ -1,0 +1,36 @@
+name: Feature
+
+description: Propose or track a product feature.
+
+title: "[Feature] "
+
+body:
+  - type: input
+    id: prd
+    attributes:
+      label: PRD reference
+      description: Link or section from the PRD.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User outcome
+      description: What user outcome does this produce?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Write Given / When / Then criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: edge_cases
+    attributes:
+      label: Edge cases
+  - type: textarea
+    id: security
+    attributes:
+      label: Security / tenant isolation considerations
