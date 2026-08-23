@@ -151,42 +151,82 @@ export class ShopsService {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const [todayOrders, todayRevenue, totalOrders, totalCustomers] = await Promise.all([
-            // Today's orders
-            this.prisma.order.count({
-                where: {
-                    shopId,
-                    createdAt: { gte: today },
-                },
-            }),
-            // Today's revenue
-            this.prisma.order.aggregate({
-                where: {
-                    shopId,
-                    createdAt: { gte: today },
-                    status: { not: 'CANCELLED' },
-                },
-                _sum: { totalAmount: true },
-            }),
-            // Total orders
-            this.prisma.order.count({
-                where: { shopId },
-            }),
-            // Total unique customers
-            this.prisma.order.groupBy({
-                by: ['customerId'],
-                where: {
-                    shopId,
-                    customerId: { not: null },
-                },
-            }),
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(startOfWeek.getDate() - today.getDay());
+
+        const [
+            todayOrders,
+            todayRevenue,
+            yesterdayOrders,
+            yesterdayRevenue,
+            weekOrders,
+            weekRevenue,
+            totalCustomers,
+            inventory,
+            lastOrder
+        ] = await Promise.all([
+            this.prisma.order.count({ where: { shopId, createdAt: { gte: today } } }),
+            this.prisma.order.aggregate({ where: { shopId, createdAt: { gte: today }, status: { not: 'CANCELLED' } }, _sum: { totalAmount: true } }),
+            this.prisma.order.count({ where: { shopId, createdAt: { gte: yesterday, lt: today } } }),
+            this.prisma.order.aggregate({ where: { shopId, createdAt: { gte: yesterday, lt: today }, status: { not: 'CANCELLED' } }, _sum: { totalAmount: true } }),
+            this.prisma.order.count({ where: { shopId, createdAt: { gte: startOfWeek } } }),
+            this.prisma.order.aggregate({ where: { shopId, createdAt: { gte: startOfWeek }, status: { not: 'CANCELLED' } }, _sum: { totalAmount: true } }),
+            this.prisma.order.groupBy({ by: ['customerId'], where: { shopId, customerId: { not: null } } }),
+            this.prisma.inventoryItem.findMany({ where: { shopId } }),
+            this.prisma.order.findFirst({ where: { shopId }, orderBy: { createdAt: 'desc' } })
         ]);
 
+        const alerts: string[] = [];
+        const lowInventory = inventory.filter(item => item.quantity <= item.lowStockThreshold);
+        if (lowInventory.length > 0) {
+            alerts.push(`Low inventory for ${lowInventory.length} items`);
+        }
+        
+        if (lastOrder) {
+            const hoursSinceLastOrder = (new Date().getTime() - lastOrder.createdAt.getTime()) / (1000 * 60 * 60);
+            if (hoursSinceLastOrder >= 2) {
+                alerts.push('No orders in last 2 hours');
+            }
+        } else {
+            alerts.push('No orders found');
+        }
+
+        const avgOrderValue = todayOrders > 0 ? (todayRevenue._sum.totalAmount || 0) / todayOrders : 0;
+        const totalCustomersCount = totalCustomers.length;
+
+        // Simplify topItems and recentOrders for this endpoint
+        const topItems = await this.prisma.orderItem.groupBy({
+            by: ['menuItemId'],
+            where: { order: { shopId, createdAt: { gte: today } } },
+            _sum: { quantity: true },
+            orderBy: { _sum: { quantity: 'desc' } },
+            take: 5
+        });
+
+        const recentOrders = await this.prisma.order.findMany({
+            where: { shopId },
+            orderBy: { createdAt: 'desc' },
+            take: 10
+        });
+
         return {
-            todayOrders,
             todayRevenue: todayRevenue._sum.totalAmount || 0,
-            totalOrders,
-            totalCustomers: totalCustomers.length,
+            todayOrders,
+            yesterdayRevenue: yesterdayRevenue._sum.totalAmount || 0,
+            yesterdayOrders,
+            weekRevenue: weekRevenue._sum.totalAmount || 0,
+            weekOrders,
+            totalCustomers: totalCustomersCount,
+            avgOrderValue,
+            repeatCustomerRate: 0, // calculate appropriately if needed
+            topItems: topItems,
+            recentOrders: recentOrders,
+            alerts,
+            revenueByHour: [], // mock or implement appropriately
+            revenueByDay: [] // mock or implement appropriately
         };
     }
 }

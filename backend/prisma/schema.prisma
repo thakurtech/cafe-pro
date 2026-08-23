@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -35,7 +36,7 @@ model Shop {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   currency          String             @default("INR")
-  themeColor        String             @default("#BF5700")
+  themeColor        String             @default("#6366F1")
   logo              String?
   tagline           String?
   upiId             String?
@@ -43,6 +44,8 @@ model Shop {
   fssaiNumber       String?
   isActive          Boolean            @default(true)
   trialEndsAt       DateTime?
+  // Subscription
+  subscription      Subscription?
   affiliateReferral AffiliateReferral?
   campaigns         Campaign[]
   discounts         Discount[]
@@ -51,6 +54,35 @@ model Shop {
   orders            Order[]
   shifts            Shift[]
   users             User[]
+  tables            Table[]
+  games             Game[]
+}
+
+model Subscription {
+  id                String             @id @default(uuid())
+  shopId            String             @unique
+  plan              String             @default("STARTER") // STARTER, GROWTH, PRO
+  status            SubscriptionStatus @default(TRIAL)
+  trialEndsAt       DateTime?
+  currentPeriodEnd  DateTime?
+  razorpaySubId     String?
+  priceMonthly      Int                @default(499)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  shop              Shop               @relation(fields: [shopId], references: [id])
+}
+
+model Table {
+  id        String      @id @default(uuid())
+  shopId    String
+  name      String      // e.g. "Table 1", "Counter", "Outdoor A"
+  capacity  Int         @default(4)
+  status    TableStatus @default(AVAILABLE)
+  qrCode    String?     // URL to QR image or just the path
+  position  Json?       // {x, y} for floor plan
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  shop      Shop        @relation(fields: [shopId], references: [id])
 }
 
 model MenuCategory {
@@ -58,6 +90,7 @@ model MenuCategory {
   name      String
   shopId    String
   sortOrder Int        @default(0)
+  isActive  Boolean    @default(true)
   shop      Shop       @relation(fields: [shopId], references: [id])
   items     MenuItem[]
 }
@@ -72,6 +105,8 @@ model MenuItem {
   categoryId      String
   popularityScore Float           @default(0)
   margin          Float           @default(0)
+  taxRate         Float           @default(0)  // e.g. 0.05 for 5% GST
+  isVeg           Boolean         @default(true)
   category        MenuCategory    @relation(fields: [categoryId], references: [id])
   modifiers       ModifierGroup[]
   orderItems      OrderItem[]
@@ -104,36 +139,59 @@ model Order {
   status         OrderStatus   @default(PENDING)
   source         OrderSource   @default(POS)
   totalAmount    Float
+  subtotal       Float         @default(0)
+  taxAmount      Float         @default(0)
+  discountAmount Float         @default(0)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   paymentMethod  PaymentMethod @default(CASH)
   paymentStatus  String        @default("PENDING")
   paidAt         DateTime?
   discountCode   String?
-  discountAmount Float         @default(0)
   tableNumber    String?
+  tableId        String?
   notes          String?
   cashierId      String?
+  razorpayOrderId String?
+  razorpayPaymentId String?
   attribution    Attribution?
   customer       User?         @relation(fields: [customerId], references: [id])
   shop           Shop          @relation(fields: [shopId], references: [id])
   items          OrderItem[]
+  refunds        Refund[]
 }
 
 model OrderItem {
-  id         String           @id @default(uuid())
-  orderId    String
-  menuItemId String
-  quantity   Int
-  price      Float
-  menuItem   MenuItem         @relation(fields: [menuItemId], references: [id])
-  order      Order            @relation(fields: [orderId], references: [id])
-  modifiers  ModifierOption[] @relation("OrderItemModifiers")
+  id              String           @id @default(uuid())
+  orderId         String
+  menuItemId      String
+  quantity        Int
+  price           Float
+  // Price & name snapshots - critical so historical orders don't change
+  nameSnapshot    String           @default("")
+  priceSnapshot   Float            @default(0)
+  taxRateSnapshot Float            @default(0)
+  menuItem        MenuItem         @relation(fields: [menuItemId], references: [id])
+  order           Order            @relation(fields: [orderId], references: [id])
+  modifiers       ModifierOption[] @relation("OrderItemModifiers")
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  orderId     String
+  amount      Float
+  reason      String
+  refundedBy  String   // userId
+  type        String   @default("FULL") // FULL or PARTIAL
+  status      String   @default("COMPLETED")
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id])
 }
 
 model LoyaltyProfile {
   id           String               @id @default(uuid())
   userId       String               @unique
+  shopId       String               @default("")
   points       Int                  @default(0)
   totalVisits  Int                  @default(0)
   lastVisit    DateTime?
@@ -302,12 +360,42 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
+model Game {
+  id            String        @id @default(uuid())
+  shopId        String
+  name          String
+  type          String        @default("SCRATCH_CARD") // SCRATCH_CARD, SPIN_WHEEL
+  isActive      Boolean       @default(true)
+  attemptsPerDay Int          @default(1)
+  winRate       Float         @default(0.3) // 30% win rate
+  rewardType    String        @default("POINTS") // POINTS, DISCOUNT
+  rewardValue   Float         @default(50) // points or discount amount
+  minOrderAmount Float        @default(0)
+  createdAt     DateTime      @default(now())
+  shop          Shop          @relation(fields: [shopId], references: [id])
+  sessions      GameSession[]
+}
+
+model GameSession {
+  id         String   @id @default(uuid())
+  gameId     String
+  customerId String?
+  deviceId   String?  // for guest players
+  won        Boolean  @default(false)
+  rewardType String?
+  rewardValue Float?
+  rewardClaimed Boolean @default(false)
+  playedAt   DateTime @default(now())
+  game       Game     @relation(fields: [gameId], references: [id])
+}
+
 enum Role {
   SUPER_ADMIN
   CAFE_OWNER
   MANAGER
   CASHIER
   CHEF
+  CAPTAIN
   AFFILIATE
   CUSTOMER
 }
@@ -328,6 +416,7 @@ enum OrderSource {
   QR_PICKUP
   DELIVERY
   MINI_APP
+  STOREFRONT
 }
 
 enum PaymentMethod {
@@ -335,4 +424,22 @@ enum PaymentMethod {
   UPI
   CARD
   SPLIT
+  RAZORPAY
+  PAY_AT_COUNTER
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  RESERVED
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  GRACE
+  SUSPENDED
+  CANCELLED
 }

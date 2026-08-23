@@ -86,5 +86,20 @@ export class OrdersController {
     remove(@Param('id') id: string) {
         return this.ordersService.remove(id);
     }
+
+    @Get('refunds')
+    @UseGuards(JwtAuthGuard)
+    getRefunds(@Query('shopId') shopId: string) {
+        return this.ordersService.getRefunds(shopId);
+    }
+
+    @Post(':id/refund')
+    @UseGuards(JwtAuthGuard)
+    createRefund(
+        @Param('id') id: string,
+        @Body() data: { amount: number; reason: string; type: string; refundedBy?: string }
+    ) {
+        return this.ordersService.createRefund(id, data.amount, data.reason, data.refundedBy || 'system', data.type);
+    }
 }
 

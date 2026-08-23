@@ -15,10 +15,14 @@ export interface ModifierGroup {
 export interface MenuItem {
     id: string;
     name: string;
-    description: string;
+    description?: string;
     price: number;
-    image: string;
-    popularityScore: number;
+    image?: string;
+    popularityScore?: number;
+    isAvailable?: boolean;
+    isVeg?: boolean;
+    taxRate?: number;
+    margin?: number;
     modifiers?: ModifierGroup[];
 }
 

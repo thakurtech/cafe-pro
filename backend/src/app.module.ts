@@ -13,6 +13,11 @@ import { DiscountsModule } from './discounts/discounts.module';
 import { ReportsModule } from './reports/reports.module';
 import { AuditModule } from './audit/audit.module';
 
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { TablesModule } from './tables/tables.module';
+import { StorefrontModule } from './storefront/storefront.module';
+import { PaymentsModule } from './payments/payments.module';
+
 @Module({
   imports: [
     MenuModule,
@@ -26,6 +31,10 @@ import { AuditModule } from './audit/audit.module';
     DiscountsModule,
     ReportsModule,
     AuditModule,
+    SubscriptionsModule,
+    TablesModule,
+    StorefrontModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

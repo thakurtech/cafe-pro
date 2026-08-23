@@ -37,25 +37,57 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
 // ==================== MENU ====================
 
+const DEMO_MENU: MenuCategory[] = [
+    {
+        id: 'cat-1',
+        name: 'Coffee',
+        items: [
+            { id: 'm-1', name: 'Espresso', price: 150, description: 'Rich double shot espresso', isAvailable: true },
+            { id: 'm-2', name: 'Cappuccino', price: 200, description: 'Espresso with velvety foamed milk', isAvailable: true },
+            { id: 'm-3', name: 'Café Latte', price: 220, description: 'Smooth espresso with steamed milk', isAvailable: true },
+            { id: 'm-4', name: 'Americano', price: 180, description: 'Diluted espresso with hot water', isAvailable: true },
+            { id: 'm-5', name: 'Mocha', price: 250, description: 'Chocolate espresso drink', isAvailable: true },
+        ]
+    },
+    {
+        id: 'cat-2',
+        name: 'Food & Bakery',
+        items: [
+            { id: 'm-6', name: 'Butter Croissant', price: 120, description: 'Flaky French pastry', isAvailable: true },
+            { id: 'm-7', name: 'Grilled Veggie Sandwich', price: 180, description: 'Fresh toasted sandwich', isAvailable: true },
+            { id: 'm-8', name: 'Blueberry Muffin', price: 100, description: 'Freshly baked muffin', isAvailable: true },
+            { id: 'm-9', name: 'Fudge Brownie', price: 150, description: 'Rich chocolate fudge brownie', isAvailable: true },
+        ]
+    }
+];
+
 export async function fetchMenu(shopSlug?: string): Promise<MenuCategory[]> {
-    // Get shop slug from passed param or from localStorage
     let slug = shopSlug;
     if (!slug && typeof window !== 'undefined') {
         const shopData = localStorage.getItem('shop_data');
         if (shopData) {
-            const shop = JSON.parse(shopData);
-            slug = shop.slug;
+            try {
+                const shop = JSON.parse(shopData);
+                slug = shop.slug;
+            } catch (e) {}
         }
     }
 
     if (!slug) {
-        console.warn('No shop slug available for fetchMenu');
-        return [];
+        slug = 'cafe-noir';
     }
 
-    const res = await fetchWithAuth(`${API_URL}/menu?shop=${slug}`);
-    if (!res.ok) throw new Error('Failed to fetch menu');
-    return res.json();
+    try {
+        const res = await fetchWithAuth(`${API_URL}/menu?shop=${slug}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) return data;
+        }
+    } catch (e) {
+        console.warn('API fetchMenu failed, using demo fallback:', e);
+    }
+
+    return DEMO_MENU;
 }
 
 // ==================== ORDERS ====================

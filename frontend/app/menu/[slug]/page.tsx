@@ -152,6 +152,11 @@ export default function PublicMenuPage() {
             setShowCart(false);
             toast.success(`Order ${order.shortId} placed successfully!`);
 
+            // Redirect customer to live order status & digital receipt page
+            setTimeout(() => {
+                window.location.href = `/order-status/${order.id}`;
+            }, 1200);
+
         } catch (error) {
             console.error('Order submission failed:', error);
             toast.error('Failed to place order. Please try again.');

@@ -91,7 +91,7 @@ export default function TableOrderPage() {
 
         setIsSubmitting(true)
         try {
-            await createOrder({
+            const newOrder = await createOrder({
                 shopId,
                 items: cart.map(c => ({ menuItemId: c.id, quantity: c.qty })),
                 source: 'QR_TABLE',
@@ -101,6 +101,12 @@ export default function TableOrderPage() {
             toast.success('Order placed successfully!')
             setCart([])
             setIsCartOpen(false)
+
+            if (newOrder?.id) {
+                setTimeout(() => {
+                    window.location.href = `/order-status/${newOrder.id}`;
+                }, 1000);
+            }
         } catch (error: any) {
             toast.error(error.message || 'Failed to place order')
         } finally {

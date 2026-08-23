@@ -44,6 +44,24 @@ export function MainNav() {
     if (isLandingPage) {
         return (
             <nav className="fixed top-0 left-0 right-0 z-50 bg-stone-950/80 backdrop-blur-xl border-b border-white/5">
+                {/* Unified Persona Switcher Bar */}
+                <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 px-4 py-1 text-center text-xs font-semibold text-white flex items-center justify-between">
+                    <span className="hidden sm:inline font-mono">🧪 DEMO LOOP SWITCHER:</span>
+                    <div className="flex items-center gap-3 mx-auto sm:mx-0">
+                        <Link href="/super-admin" className="hover:underline flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded">
+                            👑 1. Super Admin
+                        </Link>
+                        <span>•</span>
+                        <Link href="/pos" className="hover:underline flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded">
+                            ☕ 2. Cafe Owner & POS
+                        </Link>
+                        <span>•</span>
+                        <Link href="/table/T-4?shop=cafe-noir" className="hover:underline flex items-center gap-1 bg-black/20 px-2 py-0.5 rounded">
+                            📱 3. Customer QR
+                        </Link>
+                    </div>
+                </div>
+
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
@@ -146,6 +164,28 @@ export function MainNav() {
     // App navigation (light theme for internal pages)
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
+            {/* Unified Persona Switcher Bar */}
+            <div className="bg-stone-900 px-4 py-1 text-center text-xs font-semibold text-white flex items-center justify-between">
+                <span className="hidden sm:inline text-amber-400 font-mono">🧪 DEMO SWITCHER:</span>
+                <div className="flex items-center gap-3 mx-auto sm:mx-0">
+                    <Link href="/super-admin" className="hover:text-amber-400 flex items-center gap-1">
+                        👑 Super Admin
+                    </Link>
+                    <span className="text-stone-600">•</span>
+                    <Link href="/pos" className="hover:text-amber-400 flex items-center gap-1">
+                        ☕ Cafe POS
+                    </Link>
+                    <span className="text-stone-600">•</span>
+                    <Link href="/kitchen" className="hover:text-amber-400 flex items-center gap-1">
+                        🍳 Kitchen
+                    </Link>
+                    <span className="text-stone-600">•</span>
+                    <Link href="/table/T-4?shop=cafe-noir" className="hover:text-amber-400 flex items-center gap-1">
+                        📱 Customer QR
+                    </Link>
+                </div>
+            </div>
+
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}

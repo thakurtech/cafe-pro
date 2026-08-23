@@ -1,307 +1,312 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import {
-    LayoutDashboard,
-    ShoppingBag,
-    Users,
-    Settings,
-    LogOut,
-    Bell,
-    Search,
-    TrendingUp,
-    DollarSign,
-    Coffee,
-    Clock,
-    ChevronRight
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import { useAuth } from '@/lib/auth-context';
+import { useEffect, useState } from "react";
+import { ArrowUpRight, ArrowDownRight, IndianRupee, ShoppingBag, Receipt, Users, AlertCircle, Clock, ExternalLink, Megaphone, ChefHat } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useRouter } from "next/navigation";
 
-const DashboardChart = dynamic(() => import('@/components/DashboardChart'), { ssr: false });
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export default function Dashboard() {
-    const { user, shop, logout } = useAuth();
-    const [activeTab, setActiveTab] = useState('overview');
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [stats, setStats] = useState({
-        todayRevenue: 0,
-        todayOrders: 0,
-        totalCustomers: 0,
-        avgWaitTime: '0m'
-    });
-    const [recentOrders, setRecentOrders] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+export default function DashboardHome() {
+  const router = useRouter();
+  const [stats, setStats] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (user?.shopId) {
-            fetchShopData();
-        } else {
-            setLoading(false);
-        }
-    }, [user?.shopId]);
+  useEffect(() => {
+    // Mocking API call for now, assuming local storage has token & shopId
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // const token = localStorage.getItem('auth_token');
+        // const shopId = localStorage.getItem('shopId') || '1';
+        
+        // In a real app we'd fetch these:
+        // const [statsRes, subRes] = await Promise.all([
+        //   fetch(`${API}/shops/${shopId}/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        //   fetch(`${API}/subscriptions/${shopId}`, { headers: { Authorization: `Bearer ${token}` } })
+        // ]);
+        
+        // Mock data matching the requirements
+        setTimeout(() => {
+          setStats({
+            todayRevenue: 12450,
+            revenueChange: 14.5,
+            todayOrders: 86,
+            ordersChange: -2.3,
+            avgOrderValue: 144,
+            aovChange: 5.1,
+            repeatRate: 42,
+            repeatChange: 1.2,
+            revenueChart: [
+              { day: 'Mon', revenue: 8400 },
+              { day: 'Tue', revenue: 9200 },
+              { day: 'Wed', revenue: 10500 },
+              { day: 'Thu', revenue: 9800 },
+              { day: 'Fri', revenue: 14200 },
+              { day: 'Sat', revenue: 18500 },
+              { day: 'Sun', revenue: 12450 },
+            ],
+            topItems: [
+              { name: 'Cappuccino', qty: 45, revenue: 6750 },
+              { name: 'Cold Coffee', qty: 38, revenue: 5700 },
+              { name: 'Peri Peri Fries', qty: 29, revenue: 3480 },
+              { name: 'Margherita Pizza', qty: 22, revenue: 6380 },
+              { name: 'Choco Lava Cake', qty: 18, revenue: 2160 },
+            ],
+            recentOrders: [
+              { id: '1042', time: '10 mins ago', items: 3, total: 450, status: 'Completed' },
+              { id: '1043', time: '8 mins ago', items: 1, total: 120, status: 'Preparing' },
+              { id: '1044', time: '5 mins ago', items: 5, total: 1250, status: 'Preparing' },
+              { id: '1045', time: '2 mins ago', items: 2, total: 340, status: 'New' },
+              { id: '1046', time: 'Just now', items: 1, total: 150, status: 'New' },
+            ]
+          });
+          
+          setSubscription({
+            isTrial: true,
+            daysLeft: 12,
+            plan: 'Trial'
+          });
+          setLoading(false);
+        }, 600);
 
-    const fetchShopData = async () => {
-        try {
-            const token = localStorage.getItem('auth_token');
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-            // Fetch shop stats
-            const statsRes = await fetch(`${API_URL}/shops/${user?.shopId}/stats`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (statsRes.ok) {
-                const statsData = await statsRes.json();
-                setStats({
-                    todayRevenue: statsData.todayRevenue || 0,
-                    todayOrders: statsData.todayOrders || 0,
-                    totalCustomers: statsData.totalCustomers || 0,
-                    avgWaitTime: '4m' // TODO: Calculate from orders
-                });
-            }
-
-            // Fetch recent orders
-            const ordersRes = await fetch(`${API_URL}/orders?shopId=${user?.shopId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (ordersRes.ok) {
-                const ordersData = await ordersRes.json();
-                setRecentOrders(ordersData.slice(0, 5));
-            }
-
-        } catch (error) {
-            console.error('Failed to fetch shop data:', error);
-        } finally {
-            setLoading(false);
-        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        setLoading(false);
+      }
     };
 
-    const handleLogout = () => {
-        logout();
-    };
+    fetchData();
+  }, []);
 
-    const shopName = shop?.name || 'Your Cafe';
-    const userName = user?.name || 'Cafe Owner';
+  if (loading) {
+    return <div className="p-8 flex justify-center items-center h-full"><div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" /></div>;
+  }
 
-    return (
-        <div className="min-h-screen bg-[#f8f5f2] flex relative">
-            {/* Mobile Sidebar Overlay */}
-            {isMobileMenuOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <aside className={`
-                w-72 bg-[#2B1A12] text-white fixed h-full z-40 transition-transform duration-300 ease-in-out
-                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-                md:translate-x-0 md:flex flex-col
-            `}>
-                <div className="p-8 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#BF5700] to-[#8B4513] flex items-center justify-center shadow-lg shadow-[#BF5700]/20">
-                            <Coffee className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                            <span className="text-lg font-bold tracking-tight block">{shopName}</span>
-                            <span className="text-xs text-white/60">Powered by CaféOS</span>
-                        </div>
-                    </div>
-                    {/* Close button for mobile */}
-                    <button
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="md:hidden text-white/60 hover:text-white"
-                    >
-                        <ChevronRight className="h-6 w-6 rotate-180" />
-                    </button>
-                </div>
-
-                <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-                    {[
-                        { id: 'overview', icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
-                        { id: 'orders', icon: ShoppingBag, label: 'Orders', href: '/pos' },
-                        { id: 'menu', icon: Coffee, label: 'Menu Mgmt', href: '/dashboard/menu' },
-                        { id: 'settings', icon: Settings, label: 'Settings', href: '/dashboard/settings' },
-                    ].map((item) => (
-                        <Link
-                            key={item.id}
-                            href={item.href}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === item.id
-                                ? 'bg-[#BF5700] text-white shadow-lg shadow-[#BF5700]/20'
-                                : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                }`}
-                        >
-                            <item.icon className="h-5 w-5" />
-                            <span className="font-medium">{item.label}</span>
-                        </Link>
-                    ))}
-                </nav>
-
-                <div className="p-4 mt-auto">
-                    <div className="bg-white/5 rounded-2xl p-4 mb-4">
-                        <div className="text-sm text-white/60 mb-1">Today's Progress</div>
-                        <div className="flex justify-between items-end mb-2">
-                            <span className="text-xl font-bold">{stats.todayOrders} orders</span>
-                            <span className="text-xs text-[#BF5700]">₹{stats.todayRevenue.toLocaleString()}</span>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
-                    >
-                        <LogOut className="h-5 w-5" />
-                        <span className="font-medium">Sign Out</span>
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 md:ml-72 p-4 md:p-8 w-full">
-                {/* Header */}
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                        {/* Mobile Menu Button */}
-                        <button
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            className="md:hidden p-2 bg-white rounded-xl shadow-sm text-[#2B1A12]"
-                        >
-                            <LayoutDashboard className="h-6 w-6" />
-                        </button>
-
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-[#2B1A12] mb-1">
-                                Welcome, {userName}
-                            </h1>
-                            <p className="text-sm md:text-base text-[#5C4033]">
-                                {loading ? 'Loading...' : `Here's what's happening at ${shopName} today.`}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                        <Link href="/pos">
-                            <Button className="bg-[#BF5700] hover:bg-[#A04000] text-white">
-                                Open POS
-                            </Button>
-                        </Link>
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#2B1A12] to-[#5C4033] flex items-center justify-center text-white font-bold shadow-lg">
-                            {userName.charAt(0).toUpperCase()}
-                        </div>
-                    </div>
-                </header>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">
-                    {[
-                        { label: 'Today\'s Revenue', value: `₹${stats.todayRevenue.toLocaleString()}`, icon: DollarSign, color: 'from-[#BF5700] to-[#D4A017]' },
-                        { label: 'Today\'s Orders', value: stats.todayOrders.toString(), icon: ShoppingBag, color: 'from-[#2B1A12] to-[#5C4033]' },
-                        { label: 'Total Customers', value: stats.totalCustomers.toString(), icon: Users, color: 'from-[#52805c] to-[#3d5f45]' },
-                        { label: 'Avg. Wait Time', value: stats.avgWaitTime, icon: Clock, color: 'from-[#cc7a4a] to-[#a8623a]' },
-                    ].map((stat, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-[#e8dfd6] hover:shadow-md transition-shadow"
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                                    <stat.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                                </div>
-                            </div>
-                            <div className="text-2xl md:text-3xl font-bold text-[#2B1A12] mb-1">
-                                {loading ? '...' : stat.value}
-                            </div>
-                            <div className="text-sm text-[#5C4033]">{stat.label}</div>
-                        </motion.div>
-                    ))}
-                </div>
-
-                {/* Charts & Recent Orders */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    {/* Chart */}
-                    <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#e8dfd6]">
-                        <div className="flex justify-between items-center mb-6 md:mb-8">
-                            <h3 className="text-lg md:text-xl font-bold text-[#2B1A12]">Revenue Overview</h3>
-                        </div>
-                        <div className="h-64 md:h-80">
-                            {loading ? (
-                                <div className="h-full flex items-center justify-center text-gray-400">
-                                    Loading chart...
-                                </div>
-                            ) : stats.todayOrders === 0 ? (
-                                <div className="h-full flex items-center justify-center text-gray-500">
-                                    <div className="text-center">
-                                        <p className="mb-4">No orders yet today</p>
-                                        <Link href="/pos" className="text-[#BF5700] underline">
-                                            Create your first order →
-                                        </Link>
-                                    </div>
-                                </div>
-                            ) : (
-                                <DashboardChart />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Recent Orders */}
-                    <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#e8dfd6]">
-                        <div className="flex justify-between items-center mb-6 md:mb-8">
-                            <h3 className="text-lg md:text-xl font-bold text-[#2B1A12]">Recent Orders</h3>
-                            <Link href="/pos" className="text-sm font-bold text-[#BF5700] hover:underline">View All</Link>
-                        </div>
-                        <div className="space-y-4 md:space-y-6">
-                            {loading ? (
-                                <p className="text-gray-400 text-center py-4">Loading...</p>
-                            ) : recentOrders.length === 0 ? (
-                                <p className="text-gray-500 text-center py-4">No orders yet</p>
-                            ) : (
-                                recentOrders.map((order: any, i: number) => (
-                                    <div key={order.id || i} className="flex items-center justify-between p-3 hover:bg-[#f8f5f2] rounded-xl transition-colors cursor-pointer group">
-                                        <div className="flex items-center gap-3 md:gap-4">
-                                            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-[#BF5700]/10 flex items-center justify-center text-[#BF5700] font-bold group-hover:bg-[#BF5700] group-hover:text-white transition-colors text-xs md:text-sm">
-                                                #{order.shortId}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-[#2B1A12] text-sm md:text-base">
-                                                    {order.items?.length || 0} items
-                                                </div>
-                                                <div className="text-xs text-[#5C4033]">
-                                                    {new Date(order.createdAt).toLocaleTimeString()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="font-bold text-[#2B1A12] text-sm md:text-base">
-                                                ₹{order.totalAmount?.toLocaleString() || 0}
-                                            </div>
-                                            <div className={`text-xs font-medium ${order.status === 'COMPLETED' ? 'text-green-600' :
-                                                order.status === 'PENDING' ? 'text-orange-500' : 'text-blue-500'
-                                                }`}>
-                                                {order.status}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                        <Link href="/pos">
-                            <Button className="w-full mt-6 bg-[#2B1A12] hover:bg-[#BF5700] text-white rounded-xl h-12">
-                                New Order
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </main>
+  return (
+    <div className="flex-1 space-y-6 p-6 md:p-8 pt-6">
+      
+      {/* Trial Banner */}
+      {subscription?.isTrial && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between text-indigo-900 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-indigo-600" />
+            <p className="font-medium">
+              {subscription.daysLeft} days left in your trial. Unlock all features forever!
+            </p>
+          </div>
+          <Button variant="default" className="bg-indigo-600 hover:bg-indigo-700 text-white mt-3 sm:mt-0">
+            Upgrade for ₹499/month
+          </Button>
         </div>
-    );
+      )}
+
+      {/* Header & Quick Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h2>
+          <p className="text-slate-500">Welcome back! Here's what's happening today.</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" className="hidden md:flex" onClick={() => router.push('/dashboard/campaigns')}>
+            <Megaphone className="mr-2 h-4 w-4" /> Create Campaign
+          </Button>
+          <Button variant="outline" className="hidden md:flex" onClick={() => router.push('/kitchen')}>
+            <ChefHat className="mr-2 h-4 w-4" /> View Live Kitchen
+          </Button>
+          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => router.push('/pos')}>
+            <ExternalLink className="mr-2 h-4 w-4" /> Open POS
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{stats.todayRevenue.toLocaleString()}</div>
+            <p className={`text-xs flex items-center mt-1 ${stats.revenueChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {stats.revenueChange >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+              {Math.abs(stats.revenueChange)}% from yesterday
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Today's Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.todayOrders}</div>
+            <p className={`text-xs flex items-center mt-1 ${stats.ordersChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {stats.ordersChange >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+              {Math.abs(stats.ordersChange)}% from yesterday
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{stats.avgOrderValue}</div>
+            <p className={`text-xs flex items-center mt-1 ${stats.aovChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {stats.aovChange >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+              {Math.abs(stats.aovChange)}% from last week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Repeat Rate</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.repeatRate}%</div>
+            <p className={`text-xs flex items-center mt-1 ${stats.repeatChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {stats.repeatChange >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+              {Math.abs(stats.repeatChange)}% from last week
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts & Top Items Row */}
+      <div className="grid gap-4 md:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Revenue (Last 7 Days)</CardTitle>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <div className="h-[300px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.revenueChart}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} tickFormatter={(value) => `₹${value}`} dx={-10} />
+                  <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                  <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Top Selling Items</CardTitle>
+            <CardDescription>Today's best performers by quantity</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {stats.topItems.map((item: any, i: number) => (
+                <div key={i} className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-sm">
+                    {i + 1}
+                  </div>
+                  <div className="ml-4 space-y-1 flex-1">
+                    <p className="text-sm font-medium leading-none">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.qty} orders</p>
+                  </div>
+                  <div className="ml-auto font-medium">₹{item.revenue.toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Third Row: Alerts, Ops, Recent Orders */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Alerts & Insights */}
+        <div className="space-y-4">
+          <Card className="border-orange-200 bg-orange-50/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center text-orange-800">
+                <AlertCircle className="w-5 h-5 mr-2" /> Needs Attention
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="bg-white p-3 rounded-md border border-orange-100 shadow-sm text-sm">
+                <span className="font-semibold text-orange-700">Low Stock:</span> Milk (Whole) - Only 2L left.
+              </div>
+              <div className="bg-white p-3 rounded-md border border-orange-100 shadow-sm text-sm">
+                <span className="font-semibold text-orange-700">Staff:</span> Chef Rahul is 30 mins late.
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center text-blue-800">
+                <Megaphone className="w-5 h-5 mr-2" /> Revenue Opportunity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-blue-900 mb-3">
+                You have <strong>15 customers</strong> who haven't ordered in 14+ days.
+              </p>
+              <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                Send SMS Campaign
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Orders */}
+        <Card className="md:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>Latest orders from POS & QR</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/orders">View All</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {stats.recentOrders.map((order: any, i: number) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-slate-100 p-2 rounded-md">
+                      <Receipt className="w-5 h-5 text-slate-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Order #{order.id}</p>
+                      <p className="text-xs text-muted-foreground">{order.time} • {order.items} items</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm font-bold">₹{order.total}</p>
+                      <Badge variant={order.status === 'Completed' ? 'default' : order.status === 'Preparing' ? 'secondary' : 'outline'}
+                        className={order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100' : ''}
+                      >
+                        {order.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+    </div>
+  );
 }

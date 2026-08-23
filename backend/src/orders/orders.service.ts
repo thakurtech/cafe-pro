@@ -297,4 +297,36 @@ export class OrdersService {
 
         return updatedOrder;
     }
+
+    async createRefund(orderId: string, amount: number, reason: string, refundedBy: string, type: string) {
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) throw new Error('Order not found');
+
+        const refund = await this.prisma.refund.create({
+            data: {
+                orderId,
+                amount,
+                reason,
+                refundedBy,
+                type: type || 'FULL',
+            }
+        });
+
+        if (type === 'FULL') {
+            await this.prisma.order.update({
+                where: { id: orderId },
+                data: { status: 'CANCELLED', paymentStatus: 'REFUNDED' }
+            });
+        }
+
+        return refund;
+    }
+
+    async getRefunds(shopId: string) {
+        return this.prisma.refund.findMany({
+            where: { order: { shopId } },
+            include: { order: true },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
 }
