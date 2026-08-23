@@ -18,9 +18,18 @@ export async function proxy(request: NextRequest) {
       },
     });
 
-    // TODO: Replace with the chosen auth verification method and route policy.
-    // The critical rule is to refresh/verify the session before protected merchant routes render.
-    await supabase.auth.getClaims();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const isLoginPath = request.nextUrl.pathname.startsWith('/login');
+    const isStaticPath = request.nextUrl.pathname.match(/\.(png|jpg|jpeg|svg|css|js|ico)$/);
+
+    if (!user && !isLoginPath && !isStaticPath) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    if (user && isLoginPath) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   return response;
